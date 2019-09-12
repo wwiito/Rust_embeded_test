@@ -22,7 +22,7 @@ fn main() -> ! {
     let peripherals = stm32f103::Peripherals::take().unwrap();
     let led_port = &peripherals.GPIOA;
     let rcc = &peripherals.RCC;
-    let tim = &peripherals.TIM6;
+    let tim = &peripherals.TIM1;
 
 	hprintln!("Hello, world!").unwrap();
 
@@ -37,7 +37,7 @@ fn main() -> ! {
     let psc: u16 = (ratio - 1) as u16;
     let arr: u16 = (CLK_PRESCAED_HZ / TIM_FREQ) as u16;
 
-    rcc.apb1enr.write(|w| w.tim6en().set_bit());
+    rcc.apb2enr.modify(|_,w| w.tim1en().set_bit());
     tim.psc.write(|w| unsafe {w.psc().bits(psc)});
     tim.arr.write(|w| unsafe {w.arr().bits(arr)});
     tim.cr1.modify(|_, w| w.cen().enabled());
@@ -48,11 +48,14 @@ fn main() -> ! {
     hprintln!("psc: {}, {}", tim.psc.read().psc().bits(), psc).unwrap();
     hprintln!("arr: {}, {}", tim.arr.read().arr().bits(), arr).unwrap();
     hprintln!("cr1: {}", tim.cr1.read().bits()).unwrap();
-
+    
     loop{
         led_port.odr.write(|w| w.odr5().set_bit());
+        //led_port.odr.write(|w| w.odr5().clear_bit());
         while tim.sr.read().uif().bit_is_clear() {};
+        tim.sr.modify(|_,w| w.uif().clear());
         led_port.odr.write(|w| w.odr5().clear_bit());
         while tim.sr.read().uif().bit_is_clear() {};
+        tim.sr.modify(|_,w| w.uif().clear());
     }
 }
