@@ -27,3 +27,4 @@ gpio_pin!(GpioA6, GPIOA, 6);
 
 gpio_pin!(GpioA8, GPIOA, 8);
 gpio_pin!(GpioA9, GPIOA, 9);
+gpio_pin!(GpioA10, GPIOA, 10);
