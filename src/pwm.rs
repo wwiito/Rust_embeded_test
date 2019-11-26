@@ -1,5 +1,6 @@
 pub trait PwmChannel {
     fn set_pwm_value(&self, value: u32);
+    fn modify_pwm_value(&self, value: i32);
 }
 
 macro_rules! pwm_pin {
@@ -17,6 +18,20 @@ macro_rules! pwm_pin {
                     let tmp_val: u32 = (arr * value) / 100;
                     self.timer.$channel.write(|w| unsafe {w.bits(tmp_val)});
                 }
+            }
+            fn modify_pwm_value(&self, value: i32) {
+                let arr = self.timer.arr.read().arr().bits() as i32;
+                let mut current_val = self.timer.$channel.read().bits() as i32;
+
+                let modificator = (arr*value)/100;
+
+                if current_val + modificator > arr {
+                    current_val = arr;
+                } else if current_val + modificator < 0 {
+                    current_val = 0;
+                }
+
+                self.timer.$channel.write(|w| unsafe {w.bits(current_val as u32)});
             }
         }
     };

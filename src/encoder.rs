@@ -12,8 +12,8 @@ macro_rules! encoder_pins {
 
         impl<'a> EncoderPins for $cl<'a>{
             fn get_current_value(&self) -> i32 {
-                let currentVal: i32 = self.timer.cnt.read().cnt().bits() as i32;
-                let diff = currentVal - ENC_MIDDLE_VAL;
+                let current_val: i32 = self.timer.cnt.read().cnt().bits() as i32;
+                let diff = current_val - ENC_MIDDLE_VAL;
 
                 self.timer.cnt.write(|w| w.cnt().bits(ENC_MIDDLE_VAL as u16));
                 return diff;

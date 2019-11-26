@@ -7,24 +7,11 @@ PA9, PA8
 MOTOR ENCODER A:
 TIM3: PA6(CH1) PA7(CH2) 
 
-
 MOTOR CONTROL B:
 PA2, PA3
 MOTOR ENCODER B:
 
 */
-
-pub fn setup_reg_timer(_tim: &stm32f1::stm32f103::TIM4, _bus_clock: u32, _requested_freq: u32) {
-    let clk_prescaled_hz = 1000;
-    let ratio = _bus_clock / clk_prescaled_hz;
-    let psc: u16 = (ratio - 1) as u16;
-    let arr: u16 = (clk_prescaled_hz / _requested_freq) as u16;
-
-    _tim.psc.write(|w| unsafe {w.psc().bits(psc)});
-    _tim.arr.write(|w| w.arr().bits(arr));
-    _tim.cr1.modify(|_, w| w.cen().enabled());
-    _tim.dier.modify(|_,w| w.uie().set_bit());
-}
 
 pub fn setup_pwm_timer(_tim: &stm32f1::stm32f103::TIM2, _bus_clock: u32, _requested_freq: u32)
 {

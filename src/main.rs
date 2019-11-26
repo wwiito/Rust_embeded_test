@@ -45,6 +45,8 @@ static MUTEX_TIM4: Mutex<RefCell<Option<stm32f1::stm32f103::TIM4>>> = Mutex::new
 static MUTEX_TIM2_DIVIDER: Mutex<Cell<u32>> = Mutex::new(Cell::new(0));
 
 static MUTEX_TEST: Mutex<motor::Motor> = Mutex::new(motor::Motor{motor_requested_speed: Cell::new(30),
+                                                                 prev_error: Cell::new(0.0),
+                                                                 total_error: Cell::new(0.0),
                                                                  motor_speed: Cell::new(0),
                                                                  motor_position: Cell::new(0)});
 
@@ -60,9 +62,9 @@ fn main() -> ! {
 
     let mut nvic = cortexm_peripherals.NVIC;
     let mut tmp_pos: i32 = 0;
+    let mut req_speed: i32 = 0;
     let mut div = 0;
     let mut div1 = 0;
-    let mut speed = 30;
 
     clocks::setup_clock(rcc);
     peripherals_config::setup_pwm_timer(tim_pwm, APB2_FREQ, TIM2_REQ_FREQ);
@@ -82,39 +84,18 @@ fn main() -> ! {
 
     loop{
         cortex_m::asm::wfi();
-        if div == 500 {
+        if div == 10000 {
             cortex_m::interrupt::free(|cs| {
                 let tmp = MUTEX_TEST.borrow(cs);
                 tmp_pos = tmp.get_current_speed();
+                req_speed = tmp.get_req_speed();
+                tmp.set_speed(20);
             });
-            hprintln!("Position: {}", tmp_pos).unwrap();
+            hprintln!("Position: {}, req: {}", tmp_pos, req_speed).unwrap();
             div = 0;
         } else {
             div += 1;
         }
-        if div1 == 1500 {
-            cortex_m::interrupt::free(|cs| {
-                let tmp = MUTEX_TEST.borrow(cs);
-                tmp.set_speed(30);
-            });
-        } else if div1 == 3000 {
-            cortex_m::interrupt::free(|cs| {
-                let tmp = MUTEX_TEST.borrow(cs);
-                tmp.set_speed(40);
-            });
-        } else if div1 == 4500 {
-            cortex_m::interrupt::free(|cs| {
-                let tmp = MUTEX_TEST.borrow(cs);
-                tmp.set_speed(-30);
-            });
-        } else if div1 == 6000 {
-            cortex_m::interrupt::free(|cs| {
-                let tmp = MUTEX_TEST.borrow(cs);
-                tmp.set_speed(-40);
-            });
-            div1 = 0;
-        }
-        div1 += 1;
     }
 }
 
@@ -127,7 +108,6 @@ fn TIM2() {
             let g = MUTEX_GPIOA.borrow(cs).borrow();
             let tim_encoder = MUTEX_TIM3.borrow(cs).borrow();
 
-            //let gpio_pin_a = gpio::GpioA10{port: &g.as_ref().unwrap()};
             let gpio_pin_a = gpio::GpioA9{port: &g.as_ref().unwrap()};
             let gpio_pin_b = gpio::GpioA8{port: &g.as_ref().unwrap()};
             let enc = encoder::EncoderTIM3{timer: &tim_encoder.as_ref().unwrap()};

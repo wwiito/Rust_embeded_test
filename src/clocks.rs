@@ -11,7 +11,7 @@ fn setup_pll(_rcc: &stm32f1::stm32f103::RCC) {
     while _rcc.cr.read().pllrdy().is_not_ready() {}
 }
 fn setup_prescalers(_rcc: &stm32f1::stm32f103::RCC) {
-    //AHB prescaler - 1
+    //AHB prescaler -  
     _rcc.cfgr.modify(|_,w| w.hpre().div1());
     //APB1 prescaler - 1
     _rcc.cfgr.modify(|_,w| w.ppre1().div1());
