@@ -22,6 +22,9 @@ macro_rules! gpio_pin {
     };
 }
 
+gpio_pin!(GpioA1, GPIOA, 1);
+gpio_pin!(GpioA2, GPIOA, 2);
+
 gpio_pin!(GpioA5, GPIOA, 5);
 gpio_pin!(GpioA6, GPIOA, 6);
 

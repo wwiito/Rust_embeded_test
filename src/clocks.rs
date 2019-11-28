@@ -29,4 +29,7 @@ pub fn setup_clock(_rcc: &stm32f1::stm32f103::RCC) {
     _rcc.apb1enr.modify(|_,w| w.tim3en().set_bit());
     _rcc.apb1enr.modify(|_,w| w.tim2en().set_bit());
     _rcc.apb2enr.modify(|_,w| w.iopaen().set_bit());
+    _rcc.apb2enr.modify(|_,w| w.iopben().set_bit());
+    _rcc.apb2enr.modify(|_,w| w.afioen().set_bit());
+    _rcc.apb1enr.modify(|_,w| w.usart3en().set_bit());
 }

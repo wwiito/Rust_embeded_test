@@ -41,6 +41,7 @@ static MUTEX_GPIOA: Mutex<RefCell<Option<stm32f1::stm32f103::GPIOA>>> = Mutex::n
 static MUTEX_TIM2: Mutex<RefCell<Option<stm32f1::stm32f103::TIM2>>> = Mutex::new(RefCell::new(None));
 static MUTEX_TIM3: Mutex<RefCell<Option<stm32f1::stm32f103::TIM3>>> = Mutex::new(RefCell::new(None));
 static MUTEX_TIM4: Mutex<RefCell<Option<stm32f1::stm32f103::TIM4>>> = Mutex::new(RefCell::new(None));
+static MUTEX_USART2: Mutex<RefCell<Option<stm32f1::stm32f103::USART3>>> = Mutex::new(RefCell::new(None));
 
 static MUTEX_TIM2_DIVIDER: Mutex<Cell<u32>> = Mutex::new(Cell::new(0));
 
@@ -59,6 +60,7 @@ fn main() -> ! {
     let rcc = &peripherals.RCC;
     let tim_pwm = &peripherals.TIM2;
     let tim_enc_a = &peripherals.TIM3;
+    let musart = &peripherals.USART3;
 
     let mut nvic = cortexm_peripherals.NVIC;
     let mut tmp_pos: i32 = 0;
@@ -69,13 +71,24 @@ fn main() -> ! {
     clocks::setup_clock(rcc);
     peripherals_config::setup_pwm_timer(tim_pwm, APB2_FREQ, TIM2_REQ_FREQ);
     peripherals_config::setup_gpio_a(port_a);
+    peripherals_config::setup_gpio_b(&peripherals.GPIOB);
     peripherals_config::setup_encoder_timer(tim_enc_a);
+
+    musart.cr1.write(|w| w.ue().set_bit());
+    musart.brr.write(|w| unsafe{w.div_mantissa().bits(17)});
+    //musart.brr.modify(|_,w| unsafe{w.div_fraction().bits(6)});
+    musart.cr1.modify(|_,w| w.te().set_bit());
+    musart.dr.write(|w| unsafe{w.dr().bits(0x30)});
+    hprintln!("PBrr: {}", musart.brr.read().bits()).unwrap();
+    hprintln!("CR1: {}", musart.cr1.read().bits()).unwrap();
+    hprintln!("SR1: {}", musart.sr.read().bits()).unwrap();
 
     cortex_m::interrupt::free(|cs| {
         MUTEX_GPIOA.borrow(cs).replace(Some(peripherals.GPIOA));
         MUTEX_TIM4.borrow(cs).replace(Some(peripherals.TIM4));
         MUTEX_TIM2.borrow(cs).replace(Some(peripherals.TIM2));
         MUTEX_TIM3.borrow(cs).replace(Some(peripherals.TIM3));
+        MUTEX_USART2.borrow(cs).replace(Some(peripherals.USART3));
     });
 
     nvic.enable(stm32f103::Interrupt::TIM2);
@@ -84,12 +97,14 @@ fn main() -> ! {
 
     loop{
         cortex_m::asm::wfi();
-        if div == 10000 {
+        if div == 2000 {
             cortex_m::interrupt::free(|cs| {
+                let u = MUTEX_USART2.borrow(cs).borrow();
                 let tmp = MUTEX_TEST.borrow(cs);
                 tmp_pos = tmp.get_current_speed();
                 req_speed = tmp.get_req_speed();
                 tmp.set_speed(20);
+                u.as_ref().unwrap().dr.write(|w| unsafe{w.dr().bits(0x35)});
             });
             hprintln!("Position: {}, req: {}", tmp_pos, req_speed).unwrap();
             div = 0;

@@ -86,4 +86,22 @@ pub fn setup_gpio_a(_gpio: &stm32f1::stm32f103::GPIOA) {
     });
     _gpio.odr.modify(|_,w| w.odr7().set_bit());
 
+    //USART2
+    _gpio.crl.modify(|_,w| unsafe{
+        w.mode2().bits(0b11);
+        w.cnf2().bits(0b10)
+    });
+    _gpio.crl.modify(|_,w| unsafe{
+        w.mode3().bits(0b11);
+        w.cnf3().bits(0b10)
+    });
+
+}
+
+pub fn setup_gpio_b(_gpio: &stm32f1::stm32f103::GPIOB) {
+    //USART2
+    _gpio.crh.modify(|_,w| unsafe{
+        w.mode10().bits(0b11);
+        w.cnf10().bits(0b10)
+    });
 }
